@@ -8,7 +8,10 @@
  * @format
  */
 
-import React from 'react';
+//  https://dev.to/muratcanyuksel/using-websockets-with-react-50pi
+// https://blog.logrocket.com/how-to-implement-websockets-in-react-native/
+
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -31,6 +34,7 @@ const Section: React.FC<{
   title: string;
 }> = ({children, title}) => {
   const isDarkMode = useColorScheme() === 'dark';
+
   return (
     <View style={styles.sectionContainer}>
       <Text
@@ -57,10 +61,39 @@ const Section: React.FC<{
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
+  const [bids, setBids] = useState([]);
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
+
+  useEffect(() => {
+    let ws = new WebSocket('wss://www.cryptofacilities.com/ws/v1');
+    const apiCall = {
+      event: 'subscribe',
+      feed: 'book_ui_1',
+      product_ids: ['PI_XBTUSD'],
+    };
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify(apiCall));
+    };
+
+    ws.onmessage = event => {
+      const json = JSON.parse(event.data);
+      if (json) {
+        console.log(json.bids);
+        setBids(json.bids);
+      }
+    };
+    ws.onerror = e => {
+      console.log({e});
+    };
+    ws.onclose = e => {
+      // connection closed
+      console.log(e.code, e.reason);
+    };
+  }, []);
 
   return (
     <SafeAreaView style={backgroundStyle}>

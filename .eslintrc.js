@@ -2,7 +2,7 @@ module.exports = {
   root: true,
   extends: '@react-native-community',
   rules: {
-    "no-shadow": "off",
-    "@typescript-eslint/no-shadow": ["error"],
+    'no-shadow': 'off',
+    'react-hooks/exhaustive-deps': 'off',
   },
 };

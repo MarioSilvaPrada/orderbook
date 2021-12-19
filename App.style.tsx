@@ -1,5 +1,5 @@
-import styled from 'styled-components';
 import {View, Text, SafeAreaView, TouchableOpacity} from 'react-native';
+import styled from 'styled-components';
 
 const BACKGROUND_COLOR = '#191919';
 const GREY = '#2d4263';
@@ -28,6 +28,7 @@ export const SubHeader = styled(View)`
 export const SubHeaderText = styled(Text)`
   color: ${GREY};
   font-size: 20px;
+  width: 25%;
 `;
 export const Container = styled(View)`
   background: ${BACKGROUND_COLOR};
@@ -39,10 +40,18 @@ export const HeaderText = styled(Text)`
   color: white;
 `;
 
+export const CurrentProduct = styled(Text)`
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+`;
+
 export const DropDownWrapper = styled(TouchableOpacity)`
   background: ${GREY};
   border-radius: 10px;
   padding: 5px;
+  width: 25%;
+  align-items: center;
 `;
 
 export const DropDownText = styled(Text)`
@@ -66,7 +75,7 @@ export const StyledText = styled(Text)`
   font-size: 16px;
 `;
 
-export const Bar = styled(View)<{width: string; color?: 'red'}>`
+export const Bar = styled(View)<{width: string; color?: string}>`
   height: 100%;
   width: ${({width}) => width || 0};
   background-color: ${({color}) => color || 'green'};

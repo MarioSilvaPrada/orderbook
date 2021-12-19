@@ -1,32 +1,31 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * Generated with the TypeScript template
- * https://github.com/react-native-community/react-native-template-typescript
- *
- * @format
- */
-
-//  https://dev.to/muratcanyuksel/using-websockets-with-react-50pi
-// https://blog.logrocket.com/how-to-implement-websockets-in-react-native/
-
 import React, {useEffect, useState} from 'react';
 import * as S from './App.style';
+
+const MAX_NUMBER_OF_DATA = 8;
 
 const enum Product {
   XBT = 'PI_XBTUSD',
   ETH = 'PI_ETHUSD',
 }
 
+type IPrices = Array<Array<number>>;
+
 const App = () => {
+  const groups = {
+    [Product.XBT]: [0.5, 1, 2.5],
+    [Product.ETH]: [0.05, 0.1, 0.25],
+  };
+
   const [product, setProduct] = useState<Product>(Product.XBT);
 
-  const [bids, setBids] = useState([]);
-  const [asks, setAsks] = useState([]);
+  const [bids, setBids] = useState<IPrices>([]);
+  const [asks, setAsks] = useState<IPrices>([]);
   const [topAskSize, setTopAskSize] = useState(0);
   const [topBidSize, setTopBidSize] = useState(0);
-  let ws = new WebSocket('wss://www.cryptofacilities.com/ws/v1');
+
+  const [currentGroup, setCurrentGroup] = useState(0.5);
+
+  const ws = new WebSocket('wss://www.cryptofacilities.com/ws/v1');
 
   useEffect(() => {
     const apiCall = {
@@ -46,7 +45,12 @@ const App = () => {
         let totalBidSize = 0;
         const newBids = [];
 
-        for (const bid of bids) {
+        let currentBids = [...bids];
+        if (currentBids.length > MAX_NUMBER_OF_DATA) {
+          currentBids = currentBids.slice(0, MAX_NUMBER_OF_DATA);
+        }
+
+        for (const bid of currentBids) {
           if (bid) {
             const size = bid[1];
             if (size > 0) {
@@ -63,7 +67,12 @@ const App = () => {
         let totalAskSize = 0;
         const newAsks = [];
 
-        for (const ask of asks) {
+        let currentAsks = [...asks];
+        if (currentAsks.length > MAX_NUMBER_OF_DATA) {
+          currentAsks = currentAsks.slice(0, MAX_NUMBER_OF_DATA);
+        }
+
+        for (const ask of currentAsks) {
           if (ask) {
             const size = ask[1];
             if (size > 0) {
@@ -81,21 +90,54 @@ const App = () => {
       console.log({e});
     };
     ws.onclose = e => {
-      // connection closed
-      console.log(e.code, e.reason);
+      // console.log(e.code, e.reason, 'disconnected');
     };
-  }, []);
+    return () => ws.close();
+  }, [product, ws]);
 
   const onTogglePress = () => {
     if (product === Product.XBT) {
       setProduct(Product.ETH);
+      setCurrentGroup(groups[Product.ETH][0]);
+
       return;
     }
     setProduct(Product.XBT);
+    setCurrentGroup(groups[Product.XBT][0]);
   };
 
   const onKillPress = () => {
     ws.close();
+  };
+
+  const onGroupPress = () => {
+    const productArr = groups[product];
+    const currentIndex = productArr.indexOf(currentGroup);
+
+    if (currentIndex + 1 === productArr.length) {
+      setCurrentGroup(productArr[0]);
+      return;
+    }
+    setCurrentGroup(productArr[currentIndex + 1]);
+  };
+
+  const renderLevel = (arr: IPrices, color?: string) => {
+    return arr?.map(option => {
+      const price = option[0];
+      const size = option[1];
+      const total = option[2];
+      const totalLevel = topAskSize > topBidSize ? topAskSize : topBidSize;
+      const sizePercentage = Math.round((total / totalLevel) * 100);
+
+      return (
+        <S.PriceRow key={price}>
+          <S.Bar color={color} width={`${sizePercentage}%`} />
+          <S.StyledText>{price}</S.StyledText>
+          <S.StyledText>{size}</S.StyledText>
+          <S.StyledText>{total}</S.StyledText>
+        </S.PriceRow>
+      );
+    });
   };
 
   return (
@@ -103,8 +145,11 @@ const App = () => {
       <S.Container>
         <S.Header>
           <S.HeaderText>Orderbook</S.HeaderText>
-          <S.DropDownWrapper>
-            <S.DropDownText>Group 0.5</S.DropDownText>
+          <S.CurrentProduct>
+            {product === Product.XBT ? 'XBT' : 'ETH'}
+          </S.CurrentProduct>
+          <S.DropDownWrapper onPress={onGroupPress}>
+            <S.DropDownText>Group {currentGroup}</S.DropDownText>
           </S.DropDownWrapper>
         </S.Header>
         <S.SubHeader>
@@ -112,44 +157,8 @@ const App = () => {
           <S.SubHeaderText>Size</S.SubHeaderText>
           <S.SubHeaderText>Total</S.SubHeaderText>
         </S.SubHeader>
-        <S.PriceContainer isAsk>
-          {asks?.map(ask => {
-            const price = ask[0];
-            const size = ask[1];
-            const total = ask[2];
-            const totalLevel =
-              topAskSize > topBidSize ? topAskSize : topBidSize;
-            const sizePercentage = Math.round((total / totalLevel) * 100);
-
-            return (
-              <S.PriceRow key={price}>
-                <S.Bar color="red" width={`${sizePercentage}%`} />
-                <S.StyledText>{price}</S.StyledText>
-                <S.StyledText>{size}</S.StyledText>
-                <S.StyledText>{total}</S.StyledText>
-              </S.PriceRow>
-            );
-          })}
-        </S.PriceContainer>
-        <S.PriceContainer>
-          {bids?.map(bid => {
-            const price = bid[0];
-            const size = bid[1];
-            const total = bid[2];
-            const totalLevel =
-              topAskSize > topBidSize ? topAskSize : topBidSize;
-            const sizePercentage = Math.round((total / totalLevel) * 100);
-
-            return (
-              <S.PriceRow key={price}>
-                <S.Bar width={`${sizePercentage}%`} />
-                <S.StyledText>{price}</S.StyledText>
-                <S.StyledText>{size}</S.StyledText>
-                <S.StyledText>{total}</S.StyledText>
-              </S.PriceRow>
-            );
-          })}
-        </S.PriceContainer>
+        <S.PriceContainer isAsk>{renderLevel(asks, 'red')}</S.PriceContainer>
+        <S.PriceContainer>{renderLevel(bids)}</S.PriceContainer>
         <S.ButtonsWrapper>
           <S.Button onPress={onTogglePress}>
             <S.Label>Toggle feed</S.Label>

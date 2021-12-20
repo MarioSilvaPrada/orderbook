@@ -46,17 +46,37 @@ const App = () => {
         const newBids = [];
 
         let currentBids = [...bids];
+        // filter array with a maximum number of data we want to receive
         if (currentBids.length > MAX_NUMBER_OF_DATA) {
           currentBids = currentBids.slice(0, MAX_NUMBER_OF_DATA);
         }
 
-        for (const bid of currentBids) {
+        for (const [index, bid] of currentBids.entries()) {
           if (bid) {
+            const price = bid[0];
             const size = bid[1];
             if (size > 0) {
-              bid.push(size + totalBidSize);
-              newBids.push(bid);
-              totalBidSize += size;
+              const currentPrice =
+                currentGroup * Math.ceil(price / currentGroup);
+
+              //if the current price is the same as previous one we want to merge them
+              if (
+                currentBids[index - 1] &&
+                currentPrice ===
+                  currentGroup *
+                    Math.ceil(currentBids[index - 1][0] / currentGroup)
+              ) {
+                const lastBid = currentBids[index - 1];
+                lastBid[1] = lastBid[1] + size;
+                lastBid[2] = lastBid[2] + size;
+                totalBidSize += size;
+              } else {
+                //otherwise we should push current bid to newBids array with totalBid size as a third value in this array
+                bid[0] = currentPrice;
+                bid.push(size + totalBidSize);
+                newBids.push(bid);
+                totalBidSize += size;
+              }
             }
           }
         }
@@ -72,13 +92,30 @@ const App = () => {
           currentAsks = currentAsks.slice(0, MAX_NUMBER_OF_DATA);
         }
 
-        for (const ask of currentAsks) {
+        for (const [index, ask] of currentAsks.entries()) {
           if (ask) {
+            const price = ask[0];
             const size = ask[1];
             if (size > 0) {
-              ask.push(size + totalAskSize);
-              newAsks.push(ask);
-              totalAskSize += size;
+              const currentPrice =
+                currentGroup * Math.ceil(price / currentGroup);
+
+              if (
+                currentAsks[index - 1] &&
+                currentPrice ===
+                  currentGroup *
+                    Math.ceil(currentAsks[index - 1][0] / currentGroup)
+              ) {
+                const lastBid = currentAsks[index - 1];
+                lastBid[1] = lastBid[1] + size;
+                lastBid[2] = lastBid[2] + size;
+                totalAskSize += size;
+              } else {
+                ask[0] = currentPrice;
+                ask.push(size + totalAskSize);
+                newAsks.push(ask);
+                totalAskSize += size;
+              }
             }
           }
         }
@@ -122,7 +159,7 @@ const App = () => {
   };
 
   const renderLevel = (arr: IPrices, color?: string) => {
-    return arr?.map(option => {
+    return arr?.map((option, i) => {
       const price = option[0];
       const size = option[1];
       const total = option[2];
@@ -130,7 +167,7 @@ const App = () => {
       const sizePercentage = Math.round((total / totalLevel) * 100);
 
       return (
-        <S.PriceRow key={price}>
+        <S.PriceRow key={`${price}`}>
           <S.Bar color={color} width={`${sizePercentage}%`} />
           <S.StyledText>{price}</S.StyledText>
           <S.StyledText>{size}</S.StyledText>

@@ -127,7 +127,7 @@ const App = () => {
       console.log({e});
     };
     ws.onclose = e => {
-      // console.log(e.code, e.reason, 'disconnected');
+      console.log(e.code, e.reason, 'disconnected');
     };
     return () => ws.close();
   }, [product, ws]);
@@ -159,7 +159,7 @@ const App = () => {
   };
 
   const renderLevel = (arr: IPrices, color?: string) => {
-    return arr?.map((option, i) => {
+    return arr?.map(option => {
       const price = option[0];
       const size = option[1];
       const total = option[2];
@@ -167,7 +167,7 @@ const App = () => {
       const sizePercentage = Math.round((total / totalLevel) * 100);
 
       return (
-        <S.PriceRow key={`${price}`}>
+        <S.PriceRow key={price}>
           <S.Bar color={color} width={`${sizePercentage}%`} />
           <S.StyledText>{price}</S.StyledText>
           <S.StyledText>{size}</S.StyledText>
